@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rylia — Connexion</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:      #FF6B00;
+            --primary-soft: #FFF4E5;
+            --dark:         #1A1A2E;
+            --gray:         #6B7280;
+            --gray-light:   #F3F4F6;
+            --border:       #E5E7EB;
+            --white:        #FFFFFF;
+            --danger:       #EF4444;
+            --radius:       14px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--gray-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 20px 40px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 400px;
+            padding: 48px 40px 40px;
+        }
+
+        /* ---- Brand ---- */
+        .brand {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .brand-logo {
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        /* Remplacez le SVG par <img src="logo.png" width="28"> si vous avez un fichier logo */
+        .brand-logo svg {
+            width: 26px;
+            height: 26px;
+            fill: white;
+        }
+
+        .brand-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -0.3px;
+        }
+
+        .brand-sub {
+            font-size: 13px;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        /* ---- Form ---- */
+        .form-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 15px;
+            color: var(--dark);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.12);
+        }
+
+        input::placeholder { color: #C4C9D4; }
+
+        .input-wrapper { position: relative; }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover { color: var(--dark); }
+
+        /* ---- Erreur ---- */
+        .error-box {
+            display: none;
+            background: #FEF2F2;
+            border: 1.5px solid #FECACA;
+            border-radius: var(--radius);
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--danger);
+            text-align: center;
+        }
+
+        .error-box.show { display: block; }
+
+        /* ---- Bouton ---- */
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+
+        .btn-login:hover:not(:disabled) {
+            background: #E67E00;
+            box-shadow: 0 4px 14px rgba(255, 140, 0, 0.35);
+        }
+
+        .btn-login:active:not(:disabled) { transform: scale(0.98); }
+
+        .btn-login:disabled {
+            background: #FFC966;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ---- Footer ---- */
+        .card-footer {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+
+        @media (max-width: 440px) {
+            .card { padding: 36px 24px 28px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <div class="brand">
+        <div class="brand-name">Rylia</div>
+        <div class="brand-sub">Espace client</div>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <form onsubmit="handleLogin(event)" novalidate>
+
+        <div class="form-group">
+            <label for="email">Adresse e-mail</label>
+            <input type="email" id="email" placeholder="vous@exemple.fr" autocomplete="email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <div class="input-wrapper">
+                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+                <button type="button" class="toggle-password" onclick="togglePwd()" aria-label="Afficher le mot de passe">
+                    <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="btn-login">
+            <span class="spinner" id="spinner"></span>
+            <span id="btn-label">Se connecter</span>
+        </button>
+
+    </form>
+
+    <div class="card-footer">
+        Accès réservé aux clients Rylia
+    </div>
+
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDjLfEdyvYlKKJA7p-2cSkP2kNv0pjjZz0",
+  authDomain: "dashboard-roue.firebaseapp.com",
+  projectId: "dashboard-roue",
+  storageBucket: "dashboard-roue.firebasestorage.app",
+  messagingSenderId: "109735141824",
+  appId: "1:109735141824:web:2e80a4400db5af5674e825"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// ✅ On évite le redirect automatique qui cause la boucle.
+// La redirection se fait UNIQUEMENT après une connexion réussie ci-dessous.
+
+async function handleLogin(e) {
+    e.preventDefault();
+
+    const email    = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    document.getElementById("error-box").classList.remove("show");
+
+    if (!email || !password) {
+        showError("Veuillez remplir tous les champs.");
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // ✅ Connexion OK → redirection manuelle, pas via onAuthStateChanged
+        window.location.href = "dashboard.html";
+    } catch (err) {
+        setLoading(false);
+        showError(getErrorMessage(err.code));
+    }
+}
+
+function getErrorMessage(code) {
+    const map = {
+        "auth/invalid-email":          "Adresse e-mail invalide.",
+        "auth/user-not-found":         "Aucun compte trouvé avec cet e-mail.",
+        "auth/wrong-password":         "Mot de passe incorrect.",
+        "auth/invalid-credential":     "E-mail ou mot de passe incorrect.",
+        "auth/too-many-requests":      "Trop de tentatives. Réessayez dans quelques minutes.",
+        "auth/user-disabled":          "Ce compte a été désactivé.",
+        "auth/network-request-failed": "Erreur réseau. Vérifiez votre connexion."
+    };
+    return map[code] || "Une erreur est survenue. Réessayez.";
+}
+
+function showError(msg) {
+    const box = document.getElementById("error-box");
+    box.textContent = msg;
+    box.classList.add("show");
+}
+
+function setLoading(on) {
+    document.getElementById("btn-login").disabled    = on;
+    document.getElementById("spinner").style.display = on ? "block" : "none";
+    document.getElementById("btn-label").textContent = on ? "Connexion…" : "Se connecter";
+}
+
+function togglePwd() {
+    const input = document.getElementById("password");
+    input.type = input.type === "password" ? "text" : "password";
+}
+</script>
+</body>
+</html>
